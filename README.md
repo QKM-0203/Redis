@@ -433,6 +433,5 @@ QUEUED
 ,然后修改成功,但是并没有,所以说watch底层应该不是用的cas(compare and swap)自己猜的**
 ## Jedis
 **Jedis Client是Redis官网推荐的一个面向java客户端，库文件实现了对各类API进行封装调用。**
-=======
-# Redis-Jedis
->>>>>>> 6ef847ad20b9e8558f60907f381b38dcfdee298d
+
+
