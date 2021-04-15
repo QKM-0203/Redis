@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Redis入门
 **Redis 是一个开源（BSD许可）的，内存中的数据结构存储系统，它可以用作数据库、缓存和消息中间件。
 它支持多种类型的数据结构，如 字符串（strings）， 散列（hashes）， 列表（lists）， 集合（sets），
@@ -432,3 +433,6 @@ QUEUED
 ,然后修改成功,但是并没有,所以说watch底层应该不是用的cas(compare and swap)自己猜的**
 ## Jedis
 **Jedis Client是Redis官网推荐的一个面向java客户端，库文件实现了对各类API进行封装调用。**
+=======
+# Redis-Jedis
+>>>>>>> 6ef847ad20b9e8558f60907f381b38dcfdee298d
