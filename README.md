@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## Redis入门
 **Redis 是一个开源（BSD许可）的，内存中的数据结构存储系统，它可以用作数据库、缓存和消息中间件。
 它支持多种类型的数据结构，如 字符串（strings）， 散列（hashes）， 列表（lists）， 集合（sets），
@@ -309,6 +308,7 @@ geohash china:city xian   //wqj6zky6bn0
 ### Hyperloglog
 **用作基数统计的算法,基数就是一个集合中不重复的数据**
 **优点:占用的内存是固定的,2的64次方的数据只需要12kb的内存**
+
 **增加元素**
 ```java
 pfadd mykey a b c d d
@@ -343,13 +343,18 @@ bitcount sign  //2
 ```
 ## redis事务
 **redis事务没有隔离级别的概念,redis事务分为三步**
-**1.开启事务(multi)**
-**2.命令入队(命令入队的时候不执行,只有发起执行命令之后才会执行所有的命令)**
-**3.执行命令(exec)**
+* 开启事务(multi)
+* 命令入队(命令入队的时候不执行,只有发起执行命令之后才会执行所有的命令)
+* 执行命令(exec)
+
 **放弃事务 discard 则前面的命令都不执行**
+
 **事务的一个命令具有原子性,多个命令不具有原子性**
+
 **有运行时的异常的命令,出现异常的不执行,其余正确的执行**
+
 **如果是语法问题(编译时异常)则全部语句都不能执行**
+### 例子
 **正常执行**
 ```java
 127.0.0.1:6379[1]> multi
@@ -433,5 +438,149 @@ QUEUED
 ,然后修改成功,但是并没有,所以说watch底层应该不是用的cas(compare and swap)自己猜的**
 ## Jedis
 **Jedis Client是Redis官网推荐的一个面向java客户端，库文件实现了对各类API进行封装调用。**
+## redis.conf
+* 对大小写不敏感
+* 包含别的文件
+```java
+# include /path/to/local.conf
+# include /path/to/other.conf
+```
+**网络**
+* 绑定的IP   bind 127.0.0.1 ::1
+* 保护模式   protected-mode yes
+* 端口设置   port 6379
 
+**通用配置**
+* daemonize yes 采用的是单进程多线程的模式。当redis.conf中选项daemonize设置成yes时，代表开启守护进程模式。
+  在该模式下，redis会在后台运行，并将进程pid号写入至redis.conf选项pidfile设置的文件中，此时redis将一直运行，除非手动kill该进程。
+* pidfile /var/run/redis/redis-server.pid(以后台方式运行就会将进程号写进该文件)
+* loglevel notice 日志级别
+```java# Specify the server verbosity level.
+# This can be one of:
+# debug (a lot of information, useful for development/testing)
+# verbose (many rarely useful info, but not a mess like the debug level)
+# notice (moderately verbose, what you want in production probably)
+# warning (only very important / critical messages are logged)
+```
+*  logfile /var/log/redis/redis-server.log  日志生成的文件的位置
 
+**快照**
+
+持久化,因为redis是内存数据库,断电即失,所以就会有持久化,那莫一下就是规定持久化的要求
+* save 900 1   如果900s中至少有1个key被修改,那么就持久化
+* save 300 10  如果300s中至少有10个key被修改,那么就持久化
+* save 60 10000  如果60s中至少有10000个key被修改,那么就持久化
+
+**后面我们会根据要求来修改持久化的要求**
+* stop-writes-on-bgsave-error yes 如果持久化失败,还会进行下面的操作吗
+* rdbcompression yes  是否压缩rdb文件
+* rdbchecksum yes 保存rdb文件时,进行错误校验
+* dir /var/lib/redis  存放rdb文件的目录
+  **安全**
+
+**设置密码**
+* 默认是没有密码的   config set requirepass  密码  设置密码
+* 设置密码之后是需要登录的   auth 密码   登录
+* config get requirepass  查看密码
+  **限制**
+
+*  maxclients 10000  最大客户端数量 10000
+*  maxmemory <bytes> 默认内存大小
+*  maxmemory-policy noeviction  内存达到上限之后的处理策略
+
+    * volatile-lru：从已设置过期时间的数据集（server.db[i].expires）中挑选最近最少使用的数据进行淘汰
+    * volatile-ttl：从已设置过期时间的数据集（server.db[i].expires）中挑选将要过期的数据进行淘汰
+    * volatile-random：从已设置过期时间的数据集（server.db[i].expires）中选择任意数据进行淘汰
+    * allkeys-lru：当内存不足以容纳新写入数据时，在键空间中，移除最近最少使用的key（最常用）
+    * allkeys-random：从数据集（server.db[i].dict）中选择任意数据进行淘汰
+    * no-eviction：禁止驱逐数据，也就是说当内存不足以容纳新写入数据时，新写入操作会报错
+    * volatile-lfu：从已设置过期时间的数据集 (server.db[i].expires) 中挑选最不经常使用的数据进行淘汰
+    * allkeys-lfu：当内存不足以容纳新写入数据时，在键空间中，移除最不经常使用的 key
+
+**AOF模式**
+
+* aof 默认不开启,默认使用rdb持久化
+* appendfilename "appendonly.aof"    aof的文件后缀名是.aof  rdb文件是.rdb
+* 三种aof文件持久化的形式
+    * appendfsync always   每次更新同步(sync)就写入文件中,消耗性能,安全
+    * appendfsync everysec    每秒执行1次 sync,可能会丢失1s的数据   (默认),较安全
+    * appendfsync no       不执行 sync ,这个时候由操作系统自己同步数据,速度最快,不安全
+## 持久化
+**Redis是一个高效的内存数据库，所有的数据都存放在内存中。我们知道，内存中的信息会随着进程的退出或机器的宕机而消失 。
+为此，redis提供了两种持久化机制：RDB和AOF。这两种持久化方式的原理实际上就是把内存中所有数据的快照保存到磁盘文件上，
+以避免数据丢失,默认情况下使用rdb来持久化.**
+### RDB
+**原理:**
+`RDB的主要原理就是在某个时间点把内存中所有数据保存到磁盘文件中，这个过程既可以通过人工输入命令执行，也可以让服务器周期性执行。
+对于“把内存中的数据转存到磁盘中”这一过程，其实现无非就是通过定义好某种存储协议，然后按照该协议写入或读出。服务器周期执行持久化的设置是在redis.conf中设置`
+
+**手动持久化的命令**
+ * save   会堵塞服务器进程,直到rdb文件创建完为止
+ * bgsave    不会堵塞父进程,他是fork出一个子进程,用来达到持久化,当写完数据库状态后，新 RDB 文件就会原子地替换旧的 RDB 文件。父进程还可以处理客户端请求,在redis中一般都是使用bgsave来持久化
+
+**rdb文件的载入**
+   
+`RDB文件中存放的是二进制数据,后缀名是.rdb，RDB 文件的载入是在服务器启动时自动执行的，所以没有用于载入的命令，期间阻塞主进程。只要没有开启 AOF 持久化功能，
+在启动时检测到有 RDB 文件，就会自动载入。 当服务器有开启 AOF 持久化功能时，服务器将会优先使用 AOF 文件来还原数据库状态。原因是 AOF 文件的更新频率通常比 RDB 文件的更新频率高。`
+
+**思考问题**
+ * **问题1: 如果小李在公司服务器中执行了flushAll命令,问怎么办?**
+   
+   `答: 需要找到aof文件之后,删除flushAll命令 之后重启redis,执行save命令即可.`
+ * **问题2: 如果在执行 BGSAVE 期间，客户端发送 SAVE、BGSAVE 或 BGREWRITEAOF 命令给服务端，服务端会如何处理呢？**
+  
+   `答案：在执行 BGSAVE 期间，上述三个命令都不会被执行。
+   详细原因：前两个会被直接拒绝，原因是为了避免父子进程同时执行两个 rdbSave 调用，防止产生竞争条件。
+   而 BGREWRITEAOF 命令则是会被延迟到 BGSAVE 命令执行之后再执行。
+   但如果是 BGREWRITEAOF 命令正在执行，此时客户端发送 BGSAVE 命令则会被拒绝。
+   因为 BGREWRITEAOF 和 BGSAVE 都是由子进程执行的，所以在操作方面没有冲突的地方，
+   不能同时执行的原因是性能上的考虑——并发出两个子进程，并且这两个子进程都会同时执行大量 io（磁盘写入）操作`
+   
+**AOF**
+
+**原理:**
+`我们从上面的介绍知道，RDB 持久化通过保存数据库状态来持久化。而 AOF 与之不同，它是通过保存对数据库的写命令来记录数据库状态。`
+
+也就是说当你执行了 set key 123,Redis 就会将这条写命令保存到 AOF 文件中。在服务器下次启动时，就可以通过载入和执行 AOF 文件中保存的命令，来还原服务器关闭前的数据库状态了。
+总体流程和 RDB 持久化一样会创建一个文件,后缀名是.aof、在服务器下次启动时就载入这个文件来还原数据.
+
+**AOF持久化的实现**
+
+`AOF 持久化功能的实现可以分为 3 个步骤：命令追加、文件写入、文件同步`
+ * 命令追加: 将命令追加到AOF缓冲区的末尾。
+ * 文件写入: 将AOF缓冲区的内存写到.aof文件中。
+ * 文件同步: 将文件保存到磁盘上。
+
+`在《Redis设计与实现》中提到，Redis 服务器进程就是一个事件循环，这个循环中的文件事件（socket 的可读可写事件）负责接收客户端的命令请求，以及向客户端发送命令结果。
+当服务器是处理处理事件的时侯,可能会发生写的操作,使得一些内容会被追加到 AOF 缓冲区末尾。所以，在服务器每次结束一个事件循环之前 ，都会调用 flushAppendOnlyFile 方法。`
+
+==flushAppendOnlyFile方法:==`执行以下两个工作：`
+
+* WRITE：根据条件，将缓冲区内容写入到 AOF 文件。 
+  
+* SAVE：根据条件，调用 fsync 或 fdatasync 函数，将 AOF 文件保存到磁盘中。
+
+**既然 AOF 持久化是通过保存写命令到文件的，那随着时间的推移，这个 AOF 文件记录的内容就越来越多，文件体积也就越来越大，对其进行数据还原的时间也就越来越久。**
+
+**AOF重写**
+
+`创建一个新的.aof文件,新文件里面不会有冗余的数据,所以新文件比旧文件小很多`
+
+==所谓冗余就是:当你使用同一个命令对某条数据改了好几次,新文件只存储最后一条数据,所以说不会有冗余的数据存在 ==
+
+`注意:`**因为要有大量的IO操作,所以redis是使用子进程来实现这个功能的,否则会导致主进程堵塞.**
+
+==又有一个新的问题产生了:==子进程在重写的过程中父进程产生了新的修改命令,这就会导致数据库状态和重写后的.aof文件不一致`
+
+**解决:**
+`为了解决这个问题，Redis 设置了一个 AOF 重写缓冲区。在子进程执行 AOF 重写期间，主进程需要执行以下三个步骤：`
+* 执行客户端的请求命令 
+* 将执行后的写命令追加到 AOF 缓冲区
+* 将执行后的写命令追加到 AOF 重写缓冲区
+
+`当子进程当子进程结束重写后，会向主进程发送一个信号，主进程接收到之后会调用信号处理函数执行以下步骤：`
+
+* 将 AOF 重写缓冲区内容写入新的 AOF 文件中。此时新文件所保存的数据库状态就和当前数据库状态一致了
+* 对新文件进行改名，原子地覆盖现有 AOF 文件，完成新旧文件的替换.
+
+当函数执行完成后,主进程就继续处理客户端命令,所以整个AOF重写的过程中,只有在执行信号处理的时候再回堵塞主线程,其他时候都不会堵塞
