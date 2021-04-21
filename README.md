@@ -584,3 +584,30 @@ QUEUED
 * 对新文件进行改名，原子地覆盖现有 AOF 文件，完成新旧文件的替换.
 
 当函数执行完成后,主进程就继续处理客户端命令,所以整个AOF重写的过程中,只有在执行信号处理的时候再回堵塞主线程,其他时候都不会堵塞
+## redis 发布订阅
+**订阅消息**
+```java
+subscribe name(name 就是名字)
+
+
+
+        127.0.0.1:6379> subscribe qkm
+        Reading messages... (press Ctrl-C to quit)
+        1) "subscribe"
+        2) "qkm"
+        3) (integer) 1
+        1) "message"
+        2) "qkm"
+        3) "one"
+
+```
+**发布消息**
+```java
+publish name message      //只要生产者发布消息,将他的所有订阅者形成一个链表,然后给他们发生消息
+
+        127.0.0.1:6379> publish  qkm "one"
+        (integer) 1
+
+```
+**redis可以实现一些简单的场景,比如实时聊天室,公众号,关注**
+**复杂的一些场景**
