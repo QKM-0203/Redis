@@ -22,4 +22,10 @@ public class CommentController {
     public Comment getComment(@PathVariable("bossId") String bossId){
          return commentService.getComment(bossId);
     }
+
+
+    @GetMapping("/update")
+    public Comment updateComment(){
+        return commentService.updateComment(new Comment("测试redis3", "2021-04-23 12:59:56", "2021-02-22 19:43:5612345", "123456"));
+    }
 }

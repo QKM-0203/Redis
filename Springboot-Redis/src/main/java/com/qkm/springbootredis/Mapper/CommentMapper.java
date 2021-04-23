@@ -1,5 +1,7 @@
 package com.qkm.springbootredis.Mapper;
 import java.util.List;
+
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -16,4 +18,7 @@ public interface CommentMapper extends BaseMapper<Comment> {
 
      Comment searchByBossid(@Param("bossid") String bossid);
 
+     int updateCommentByBossid(@Param("comment") String comment, @Param("bossid") String bossid);
+
+     int updatebyBossId(Comment comment);
 }
